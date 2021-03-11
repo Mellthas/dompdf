@@ -33,18 +33,36 @@ class Inline extends AbstractFrameDecorator
     }
 
     /**
-     * @param Frame|null $frame
-     * @param bool $force_pagebreak
-     * @throws Exception
+     * Vertical padding, border, and margin do not apply when determining the
+     * height for inline frames.
+     *
+     * http://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
+     *
+     * The vertical padding, border and margin of an inline, non-replaced box
+     * start at the top and bottom of the content area, not the
+     * 'line-height'. But only the 'line-height' is used to calculate the
+     * height of the line box.
+     *
+     * @return float
      */
-    function split(Frame $frame = null, $force_pagebreak = false)
+    public function get_margin_height(): float
     {
-        if (is_null($frame)) {
+        $style = $this->get_style();
+        $font = $style->font_family;
+        $size = $style->font_size;
+        $fontHeight = $this->_dompdf->getFontMetrics()->getFontHeight($font, $size);
+
+        return ($style->line_height / ($size > 0 ? $size : 1)) * $fontHeight;
+    }
+
+    public function split(Frame $child = null, bool $force_pagebreak = false)
+    {
+        if (is_null($child)) {
             $this->get_parent()->split($this, $force_pagebreak);
             return;
         }
 
-        if ($frame->get_parent() !== $this) {
+        if ($child->get_parent() !== $this) {
             throw new Exception("Unable to split: frame is not a child of this one.");
         }
 
@@ -76,16 +94,16 @@ class Inline extends AbstractFrameDecorator
         $style->border_left_width = 0;
 
         //On continuation of inline element on next line,
-        //don't repeat non-vertically repeatble background images
-        //See e.g. in testcase image_variants, long desriptions
+        //don't repeat non-vertically repeatable background images
+        //See e.g. in testcase image_variants, long descriptions
         if (($url = $style->background_image) && $url !== "none"
             && ($repeat = $style->background_repeat) && $repeat !== "repeat" && $repeat !== "repeat-y"
         ) {
             $style->background_image = "none";
         }
 
-        // Add $frame and all following siblings to the new split node
-        $iter = $frame;
+        // Add $child and all following siblings to the new split node
+        $iter = $child;
         while ($iter) {
             $frame = $iter;
             $iter = $iter->get_next_sibling();

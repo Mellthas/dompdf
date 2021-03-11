@@ -352,7 +352,7 @@ class Page extends AbstractFrameDecorator
 
         } // Inline frames (2):
         else {
-            if (in_array($display, Style::$INLINE_TYPES)) {
+            if (in_array($display, ["inline", "inline-block"], true)) {
 
                 // Avoid breaks within table-cells
                 if ($this->_in_table) {
@@ -548,7 +548,6 @@ class Page extends AbstractFrameDecorator
                 $this->_page_full = true;
                 $this->_in_table = $in_table;
                 $iter->_already_pushed = true;
-                $frame->_already_pushed = true;
 
                 return true;
             }
@@ -635,11 +634,7 @@ class Page extends AbstractFrameDecorator
 
     //........................................................................
 
-    /**
-     * @param Frame|null $frame
-     * @param bool $force_pagebreak
-     */
-    function split(Frame $frame = null, $force_pagebreak = false)
+    public function split(Frame $child = null, bool $force_pagebreak = false)
     {
         // Do nothing
     }
