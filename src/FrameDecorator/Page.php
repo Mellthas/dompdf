@@ -570,13 +570,13 @@ class Page extends AbstractFrameDecorator
                 break;
             }
 
-            if ($next = $iter->get_prev_sibling()) {
-                while ($next->is_text_node() && $next->get_node()->nodeValue == "") {
-                    $next = $next->get_prev_sibling();
-                    if (!$next)
-                        break 2;
-                }
+            $next = $iter->get_prev_sibling();
+            // Skip empty text nodes
+            while ($next && $next->is_text_node() && $next->get_node()->nodeValue === "") {
+                $next = $next->get_prev_sibling();
+            }
 
+            if ($next) {
                 Helpers::dompdf_debug("page-break", "following prev sibling.");
 
                 if ($next->is_table() && !$iter->is_table()) {
