@@ -534,7 +534,6 @@ class Page extends AbstractFrameDecorator
                 $this->_page_full = true;
                 $this->_in_table = $in_table;
                 $iter->_already_pushed = true;
-                $frame->_already_pushed = true;
 
                 return true;
             }
