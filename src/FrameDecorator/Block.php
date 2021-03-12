@@ -201,50 +201,57 @@ class Block extends AbstractFrameDecorator
     }
 
     /**
+     * Remove the given frame and all following frames and lines from the block.
+     *
      * @param Frame $frame
      */
-    function remove_frames_from_line(Frame $frame)
+    public function remove_frames_from_line(Frame $frame): void
     {
-        // Search backwards through the lines for $frame
-        $i = $this->_cl;
-        $j = null;
-
-        while ($i >= 0) {
-            if (($j = in_array($frame, $this->_line_boxes[$i]->get_frames(), true)) !== false) {
-                break;
-            }
-
-            $i--;
+        // Only text nodes are held in the frame lists of line boxes
+        $textFrame = $frame;
+        while ($textFrame !== null && !$textFrame->is_text_node()) {
+            $textFrame = $textFrame->get_first_child();
         }
 
-        if ($j === false) {
+        if ($textFrame === null) {
             return;
         }
 
-        // Remove $frame and all frames that follow
-        while ($j < count($this->_line_boxes[$i]->get_frames())) {
-            $frames = $this->_line_boxes[$i]->get_frames();
-            $f = $frames[$j];
-            $frames[$j] = null;
-            unset($frames[$j]);
-            $j++;
-            $this->_line_boxes[$i]->w -= $f->get_margin_width();
+        // Search backwards through the lines for $frame
+        $frame = $textFrame;
+        $i = $this->_cl;
+        $j = null;
+
+        while ($i > 0) {
+            $line = $this->_line_boxes[$i];
+            foreach ($line->get_frames() as $index => $f) {
+                if ($frame === $f) {
+                    $j = $index;
+                    break 2;
+                }
+            }
+            $i--;
         }
 
-        // Recalculate the height of the line
-        $h = 0;
-        foreach ($this->_line_boxes[$i]->get_frames() as $f) {
-            $h = max($h, $f->get_margin_height());
+        if ($j === null) {
+            return;
         }
 
-        $this->_line_boxes[$i]->h = $h;
+        $line->remove_frames($j);
 
         // Remove all lines that follow
-        while ($this->_cl > $i) {
-            $this->_line_boxes[$this->_cl] = null;
-            unset($this->_line_boxes[$this->_cl]);
-            $this->_cl--;
+        for ($k = $this->_cl; $k > $i; $k--) {
+            unset($this->_line_boxes[$k]);
         }
+
+        // Remove the line, if it is empty
+        if ($j === 0) {
+            unset($this->_line_boxes[$i]);
+        }
+
+        // Reset array indices
+        $this->_line_boxes = array_values($this->_line_boxes);
+        $this->_cl = count($this->_line_boxes) - 1;
     }
 
     /**
