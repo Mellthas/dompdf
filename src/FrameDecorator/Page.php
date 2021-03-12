@@ -352,7 +352,7 @@ class Page extends AbstractFrameDecorator
 
         } // Inline frames (2):
         else {
-            if (in_array($display, Style::$INLINE_TYPES)) {
+            if (in_array($display, ["inline", "inline-block"], true)) {
 
                 // Avoid breaks within table-cells
                 if ($this->_in_table) {
